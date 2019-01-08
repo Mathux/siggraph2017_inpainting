@@ -93,15 +93,16 @@ end
 
 
 -- function to modify weights
-function modify_weight(model, layer)
-   local wei = model:get(layer).weight
+function modify_weight(model, nlayer)
+   local layer = model:get(nlayer)
+   local w = layer.weight
    print("Modification of the layer with +/- 0.5 noise:")
-   print("", model:get(layer))
-   for i = 1, wei:numel()
+   print("", layer)
+   --print(w:size())
+   for i = 1, w:numel()
    do
-      wei[i] = wei[i] + noise(-0.5, 0.5)
+      w[i] = w[i] + noise(-0.5, 0.5)
    end
-   model:get(layer).weight = wei   
 end
 
 -- modify batch normalisation
