@@ -37,6 +37,8 @@ print( 'Loding model...' )
 local data = torch.load( 'completionnet_places2.t7' )
 local model    = data.model
 local datamean  = data.mean
+
+
 model:evaluate()
 if opt.gpu then
    require 'cunn'
@@ -82,14 +84,28 @@ local input = torch.cat(I, M, 1)
 input = input:reshape( 1, input:size(1), input:size(2), input:size(3) )
 if opt.gpu then input = input:cuda() end
 
-
--- added to modify weights
-local wei = model:get(2).weight
-for i = 1, 64 -- function wei length ?
-do
-    wei[i] = 0.5
+-- noise generator
+math.randomseed(os.clock()*100000000000) -- just once to initialize
+-- uniform random noise between a and b
+function noise(a, b)
+   return a + (b-a)*math.random()
 end
-model:get(2).weight = wei
+
+
+-- function to modify weights
+function modify_weight(model, layer)
+   local wei = model:get(layer).weight
+   print("Modification of the layer with +/- 0.5 noise:")
+   print("", model:get(layer))
+   for i = 1, wei:numel()
+   do
+      wei[i] = wei[i] + noise(-0.5, 0.5)
+   end
+   model:get(layer).weight = wei   
+end
+
+-- modify batch normalisation
+modify_weight(model, 2)
 
 
 
