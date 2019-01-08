@@ -84,30 +84,38 @@ local input = torch.cat(I, M, 1)
 input = input:reshape( 1, input:size(1), input:size(2), input:size(3) )
 if opt.gpu then input = input:cuda() end
 
--- noise generator
-math.randomseed(os.clock()*100000000000) -- just once to initialize
--- uniform random noise between a and b
-function noise(a, b)
-   return a + (b-a)*math.random()
+-- To have repeatability in random
+torch.manualSeed(1)
+
+function shift(el, a, b)
+   return a + (b-a)*el
 end
 
-
 -- function to modify weights
-function modify_weight(model, nlayer)
+function modify_weight(model, nlayer, rand)
    local layer = model:get(nlayer)
    local w = layer.weight
+   
+   if w==nil then
+      print("There are no weigh in this layer, continue without touching this one:")
+      print("", layer)
+      return
+   end
+   
    print("Modification of the layer with +/- 0.5 noise:")
    print("", layer)
-   --print(w:size())
-   for i = 1, w:numel()
-   do
-      w[i] = w[i] + noise(-0.5, 0.5)
-   end
+
+   local noise = shift(rand(w:size()), -0.5, 0.5)
+   
+   w:add(noise)
 end
 
 -- modify batch normalisation
-modify_weight(model, 2)
+-- torch.rand -> uniform distribution
+-- torch.randn -> normal distribution
 
+modify_weight(model, 2, torch.rand)
+-- exit()
 
 
 local res = model:forward( input ):float()[1]
