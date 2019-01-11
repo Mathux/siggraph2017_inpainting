@@ -2,7 +2,9 @@ import os
 import os.path as osp
 import argparse
 import sys
-import matplotlib.pyplot as plt
+
+import cv2
+
 import numpy as np
 from math import floor
 
@@ -23,9 +25,8 @@ def parse_args():
 
 
 def centered_square(photo):
-    print(photo.shape)
     h, w  = photo.shape[:2]
-    mask = np.zeros([h, w], dtype=np.int8)
+    mask = np.zeros_like(photo)
     r = floor(min(h, w)/3)
     
     # fill the square
@@ -40,12 +41,12 @@ def create_masks(imlist, path, maskpath):
         ext = imname.split(".")[-1]
 
         impath = osp.join(path, image_name + "." + ext)
-        photo = plt.imread(impath)
+        photo = cv2.imread(impath)
 
         mask = centered_square(photo)
         mpath = osp.join(maskpath, image_name + "_mask." + ext)
 
-        plt.imsave(mpath, mask)
+        cv2.imwrite(mpath, mask)
     
 
 def inpaint(image, imfolder, maskfolder, layer, noise, outfolder):
@@ -57,16 +58,16 @@ def inpaint(image, imfolder, maskfolder, layer, noise, outfolder):
     immask = osp.join(maskfolder, image_mask)
     command = "th inpaint_test.lua --input " + impath + " --mask " + immask + " --layer " + layer + " --noise " + noise
 
-    print(command)
+    #print(command)
 
     # execute inpainting
-    #os.system(command)
+    os.system(command)
 
     # move files arround
     move1 = "mv input.png " + osp.join(outfolder, image_name + "_in.png")
     move2 = "mv out.png " + osp.join(outfolder, image_name + "_out.png")
-    print(move1)
-    print(move2)
+    #print(move1)
+    #print(move2)
 
     # execute moving
     #os.system(move1)
@@ -98,9 +99,9 @@ if __name__ == "__main__":
 
             for iim, image in enumerate(imlist):
                 # show computation
-                #all_string = "\r" + string + str(iim+1) + "/" + str(number_images)
-                #sys.stdout.write(all_string)
-                #sys.stdout.flush()
+                all_string = "\r" + string + str(iim+1) + "/" + str(number_images)
+                sys.stdout.write(all_string)
+                sys.stdout.flush()
 
                 # computation
                 inpaint(image, impath, immask, layer, noise, out)
