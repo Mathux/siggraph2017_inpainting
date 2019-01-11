@@ -66,7 +66,7 @@ else
 		local py = torch.random(1, I:size(2)-mask_h-1)
 		local R = {{},{py,py+mask_h},{px,px+mask_w}}
 		M[R]:fill(1)
-	end 
+	end
 end
 
 local hwmax = math.max( I:size(2), I:size(3) )
@@ -105,7 +105,7 @@ function modify_weight(model, nlayer, range, rand)
       print("", layer)
       return
    end
-   
+
    print("Modification of the layer with +/- " ..  tostring(range) .. " of uniform noise")
    print("", layer)
 
@@ -115,9 +115,8 @@ function modify_weight(model, nlayer, range, rand)
 end
 
 -- modify batch normalisation
--- torch.rand -> uniform distribution
+-- torch.rand  -> uniform distribution
 -- torch.randn -> normal distribution
-  
 if opt.layer ~= 0 and opt.noise ~= 0.00 then
    modify_weight(model, opt.layer, opt.noise, torch.rand)
 end
