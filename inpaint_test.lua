@@ -28,6 +28,10 @@ cmd:option( '--mask',            'none',        'Mask image')
 cmd:option( '--maxdim',             500,        'Long edge dimension of an input image')
 cmd:option( '--gpu',              false,        'Use GPU' )
 cmd:option( '--nopostproc',       false,        'Disable post-processing' )
+cmd:option( '--nopostproc',       false,        'Disable post-processing' )
+cmd:option( '--layer',           0,        'Choice of layer to add noise' )
+cmd:option( '--noise',              0.00,        'Magnitude of noise' )
+
 local opt = cmd:parse(arg or {})
 print(opt)
 assert( opt.input ~= 'none' )
@@ -92,20 +96,20 @@ function shift(el, a, b)
 end
 
 -- function to modify weights
-function modify_weight(model, nlayer, rand)
+function modify_weight(model, nlayer, range, rand)
    local layer = model:get(nlayer)
    local w = layer.weight
    
    if w==nil then
-      print("There are no weigh in this layer, continue without touching this one:")
+      print("There are no weight in this layer, continue without touching this one:")
       print("", layer)
       return
    end
    
-   print("Modification of the layer with +/- 0.5 noise:")
+   print("Modification of the layer with +/- " ..  tostring(range) .. " of uniform noise")
    print("", layer)
 
-   local noise = shift(rand(w:size()), -0.5, 0.5)
+   local noise = shift(rand(w:size()), -range, range)
    
    w:add(noise)
 end
@@ -113,9 +117,10 @@ end
 -- modify batch normalisation
 -- torch.rand -> uniform distribution
 -- torch.randn -> normal distribution
-
-modify_weight(model, 2, torch.rand)
--- exit()
+  
+if opt.layer ~= 0 and opt.noise ~= 0.00 then
+   modify_weight(model, opt.layer, opt.noise, torch.rand)
+end
 
 
 local res = model:forward( input ):float()[1]
