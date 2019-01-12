@@ -110,7 +110,7 @@ function modify_weight(model, nlayer, range, rand)
    print("", layer)
 
    local noise = shift(rand(w:size()), -range, range)
-   
+   if opt.gpu then noise = noise:cuda() end
    w:add(noise)
 end
 
