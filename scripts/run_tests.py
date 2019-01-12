@@ -12,6 +12,9 @@ def create_dir(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
+def exec_command(s):
+    os.popen(s).readlines()
+
         
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -27,7 +30,7 @@ def parse_args():
 def centered_square(photo):
     h, w  = photo.shape[:2]
     mask = np.zeros_like(photo)
-    r = floor(min(h, w)/3)
+    r = floor(min(h, w)/4)
     
     # fill the square
     mask[int(h/2 - r/2):int(h/2 + r/2), int(w/2 - r/2):int(w/2 + r/2)] = 255
@@ -56,22 +59,18 @@ def inpaint(image, imfolder, maskfolder, layer, noise, outfolder):
 
     impath = osp.join(imfolder, image)
     immask = osp.join(maskfolder, image_mask)
-    command = "th inpaint_test.lua --input " + impath + " --mask " + immask + " --layer " + layer + " --noise " + noise
-
-    #print(command)
-
+    command = "th inpaint_test.lua --input " + impath + " --mask " + immask + " --layer " + layer + " --noise " + noise + " --gpu"
+    
     # execute inpainting
-    os.system(command)
+    exec_command(command)
 
     # move files arround
     move1 = "mv input.png " + osp.join(outfolder, image_name + "_in.png")
-    move2 = "mv out.png " + osp.join(outfolder, image_name + "_out.png")
-    #print(move1)
-    #print(move2)
+    move2 = "mv out.png " + osp.join(outfolder, image_name + "_out_noise_" + noise + ".png")
 
     # execute moving
-    #os.system(move1)
-    #os.system(move2)
+    exec_command(move1)
+    exec_command(move2)
 
 
 LAYERS = ["1", "2", "4", "5", "7", "8", "10", "11", "13", "14", "16", "17", "19", "20", "22", "23", "25", "26", "28", "29", "31", "32", "34", "35", "37", "38", "40", "41", "43", "44", "46", "47", "49"]
@@ -89,17 +88,16 @@ if __name__ == "__main__":
     create_masks(imlist, impath, immask)
 
     # iterate over noise and layers
-    for ino, noise in enumerate(NOISES):
-        for ila, layer in enumerate(LAYERS):
-            layer_name = "layer_" + layer.zfill(2)
-            noise_name = "noise_" + noise
-            out = osp.join(outfolder, layer_name, noise_name)
-            #create_dir(out)
-            string = "Files in " + out + " are processed: "
-
-            for iim, image in enumerate(imlist):
+    for ila, layer in enumerate(LAYERS):
+        layer_name = "layer_" + layer.zfill(2)
+        for iim, image in enumerate(imlist):
+            image_name = ".".join(image.split(".")[:-1])
+            out = osp.join(outfolder, layer_name, image_name)
+            create_dir(out)
+            for ino, noise in enumerate(NOISES):                                
                 # show computation
-                all_string = "\r" + string + str(iim+1) + "/" + str(number_images)
+                string = "Layer " + layer_name + ", image " + image_name + ", noise " + noise
+                all_string = "\r" + string
                 sys.stdout.write(all_string)
                 sys.stdout.flush()
 
